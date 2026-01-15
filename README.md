@@ -10,6 +10,14 @@
 | **Solutions/sec** | **2043** |
 | **Platform** | N300s RISC-V (TensTorrent) |
 
+## Proof of Performance
+
+### 1. Benchmark: 2043 Solutions/Sec (0.489ms latency)
+![Benchmark Result](benchmark_result.png)
+
+### 2. Validation: 100% Correctness (valid_math=True)
+![Validation Proof](validation_proof.png)
+
 ---
 
 ## Key Discovery
