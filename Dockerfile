@@ -1,21 +1,17 @@
-# Base image - TensTorrent RISC-V compatible
+# TurboMul PoW Miner - Koyeb N300s Deployment
 FROM ghcr.io/tenstorrent/tt-xla/tt-xla-ird-ubuntu-22-04:latest
 
-# Install Python dependencies
-RUN pip3 install numpy requests
+# Install Python dependencies including blake3
+RUN pip3 install numpy requests blake3
 
 # Set working directory
 WORKDIR /app
 
-# Copy project files
+# Copy miner files
+COPY miner.py .
 COPY solver_optimized.py .
-COPY solver.py .
+COPY requirements.txt .
 COPY README.md .
-COPY matmul_optimized.cpp .
-COPY matmul_naive.cpp .
-COPY matmul.h .
-COPY main.cpp .
-COPY CMakeLists.txt .
 
-# Run benchmark on start
-CMD ["python3.11", "solver_optimized.py", "--benchmark"]
+# Run the PoW miner
+CMD ["python3.11", "miner.py"]
