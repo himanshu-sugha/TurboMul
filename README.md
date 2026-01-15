@@ -62,7 +62,7 @@ python miner.py
 |------|---------|
 | `miner.py` | Full PoW miner (production) |
 | `solver_optimized.py` | MatMul benchmark (2043/sec) |
-| `ultra_miner.py` | Hash-speed test (230k H/s) |
+| `Dockerfile` | Koyeb N300s deployment |
 
 ## Technical Approach
 
