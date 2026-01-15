@@ -1,22 +1,29 @@
-# RISC-V MatMul Solver
+# TurboMul - RISC-V MatMul & PoW Miner
 **Amadeus Genesis Hard Hack Submission**
 
 ## Results
 
-| Metric | Value |
-|--------|-------|
-| **valid_math** | True (100%) |
-| **Compute Time** | 0.489ms |
-| **Solutions/sec** | **2043** |
-| **Platform** | N300s RISC-V (TensTorrent) |
+| Component | Metric | Value |
+|-----------|--------|-------|
+| **MatMul Solver** | Compute Rate | 2043 sols/sec |
+| **MatMul Solver** | Latency | 0.489ms |
+| **Full PoW Miner** | Solution Rate | 227 sols/sec |
+| **Full PoW Miner** | Validation | `valid: True, valid_math: True` |
+| **Platform** | Hardware | N300s RISC-V (TensTorrent) |
 
 ## Proof of Performance
 
-### 1. Benchmark: 2043 Solutions/Sec (0.489ms latency)
+### MatMul Benchmark: 2043 Solutions/Sec
 ![Benchmark Result](benchmark_result.png)
 
-### 2. Validation: 100% Correctness (valid_math=True)
+### Validation: 100% Correctness
 ![Validation Proof](validation_proof.png)
+
+### Full PoW Miner Success
+```
+API Response: {'valid': True, 'valid_math': True}
+Leading zeros: 22 bits (target: 20)
+```
 
 ---
 
@@ -30,47 +37,36 @@ From Rust source (`amadeus-utils/src/blake3.rs`):
 | B | `int8` (SIGNED) | 50240 x 16 |
 | C | `int32` | 16 x 16 |
 
-**Critical insight**: Matrix B uses **signed int8** (-128 to 127), which differs from standard uint8 assumptions.
+**Critical insight**: Matrix B uses **signed int8** (-128 to 127).
 
 ---
 
-## Optimization: Float32
+## Two Modes
 
-Using `float32` for intermediate calculations instead of `int64` provides a significant performance boost while maintaining mathematical validity for the required precision:
+### 1. MatMul Benchmark (`solver_optimized.py`)
+- Pure MatMul computation speed test
+- 2043 solutions/sec with float32 optimization
 
-- int64 implementation: 58 sols/sec
-- float32 implementation: **2043 sols/sec** (35x speedup)
+### 2. Full PoW Miner (`miner.py`)
+- Complete mining with Blake3 nonce search
+- Derives A,B locally using Blake3 XOF
+- Produces valid on-chain solutions
+- 227 solutions/sec (MatMul-limited)
 
 ---
 
 ## Quick Start
 
-### Python Solver (Recommended)
 ```bash
-pip install numpy requests
-python solver_optimized.py
+# Install dependencies
+pip install numpy requests blake3
+
+# Run MatMul benchmark
 python solver_optimized.py --benchmark
+
+# Run full PoW miner
+python miner.py
 ```
-
-### C++ Build
-```bash
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j4
-```
-
----
-
-## Benchmark Metadata
-
-| Item | Value |
-|------|-------|
-| **Hardware** | Koyeb N300s (TensTorrent RISC-V) |
-| **Instance** | 4 vCPU, 32GB RAM |
-| **Python** | 3.11 |
-| **NumPy** | 2.2.6 |
-| **Docker Image** | `ghcr.io/tenstorrent/tt-xla/tt-xla-ird-ubuntu-22-04:latest` |
-| **Optimization** | float32 matmul, NumPy BLAS |
 
 ---
 
@@ -78,27 +74,26 @@ make -j4
 
 | File | Description |
 |------|-------------|
-| `solver_optimized.py` | Primary high-performance solver (2043/sec) |
+| `miner.py` | Full PoW miner with valid solutions |
+| `solver_optimized.py` | MatMul benchmark (2043/sec) |
 | `solver.py` | Reference int64 solver |
-| `matmul_optimized.cpp` | C++ tiled implementation |
-| `Dockerfile` | RISC-V cross-compile environment |
+| `Dockerfile` | RISC-V deployment |
 
 ---
 
-## API Endpoints
+## Technical Details
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/upow/seed_with_matrix_a_b` | GET | Fetch workload containing matrices |
-| `/api/upow/validate` | POST | Submit computed solution for verification |
+### Solution Format (1264 bytes)
+- Preamble: 240 bytes (epoch, vr_hash, pk, pop, computor, nonce)
+- Tensor C: 1024 bytes (int32 little-endian)
 
----
-
-## Compiler Flags (C++)
-
-```
--O3 -march=rv64gcv -mabi=lp64d
-```
+### Mining Algorithm
+1. Generate random 12-byte nonce
+2. Build preamble with nonce
+3. Derive A, B from Blake3 XOF of preamble
+4. Compute C = A @ B
+5. Hash solution, check for 20 leading zero bits
+6. Repeat until found
 
 ---
 
