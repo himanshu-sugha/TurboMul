@@ -1,11 +1,11 @@
 # RISC-V MatMul Solver
 **Amadeus Genesis Hard Hack Submission**
 
-## 🏆 Results
+## Results
 
 | Metric | Value |
 |--------|-------|
-| **valid_math** | ✅ True (100%) |
+| **valid_math** | True (100%) |
 | **Compute Time** | 0.489ms |
 | **Solutions/sec** | **2043** |
 | **Platform** | N300s RISC-V (TensTorrent) |
@@ -18,25 +18,26 @@ From Rust source (`amadeus-utils/src/blake3.rs`):
 
 | Matrix | Type | Shape |
 |--------|------|-------|
-| A | `uint8` | 16 × 50240 |
-| B | `int8` (SIGNED!) | 50240 × 16 |
-| C | `int32` | 16 × 16 |
+| A | `uint8` | 16 x 50240 |
+| B | `int8` (SIGNED) | 50240 x 16 |
+| C | `int32` | 16 x 16 |
 
-**Critical insight**: Matrix B uses **signed int8** (-128 to 127)!
+**Critical insight**: Matrix B uses **signed int8** (-128 to 127), which differs from standard uint8 assumptions.
 
 ---
 
 ## Optimization: Float32
 
-Using `float32` instead of `int64` gives **35x speedup**:
-- int64: 58 sols/sec
-- float32: **2043 sols/sec**
+Using `float32` for intermediate calculations instead of `int64` provides a significant performance boost while maintaining mathematical validity for the required precision:
+
+- int64 implementation: 58 sols/sec
+- float32 implementation: **2043 sols/sec** (35x speedup)
 
 ---
 
 ## Quick Start
 
-### Python Solver (Fastest)
+### Python Solver (Recommended)
 ```bash
 pip install numpy requests
 python solver_optimized.py
@@ -69,10 +70,10 @@ make -j4
 
 | File | Description |
 |------|-------------|
-| `solver_optimized.py` | 🏆 Winning solver (2043/sec) |
-| `solver.py` | Original int64 solver |
+| `solver_optimized.py` | Primary high-performance solver (2043/sec) |
+| `solver.py` | Reference int64 solver |
 | `matmul_optimized.cpp` | C++ tiled implementation |
-| `Dockerfile` | RISC-V cross-compile |
+| `Dockerfile` | RISC-V cross-compile environment |
 
 ---
 
@@ -80,8 +81,8 @@ make -j4
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/upow/seed_with_matrix_a_b` | GET | Fetch workload |
-| `/api/upow/validate` | POST | Submit solution |
+| `/api/upow/seed_with_matrix_a_b` | GET | Fetch workload containing matrices |
+| `/api/upow/validate` | POST | Submit computed solution for verification |
 
 ---
 
