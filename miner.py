@@ -126,6 +126,29 @@ def validate_solution(solution):
         print(f"Validation error: {e}")
         return None
 
+def submit_solution(solution):
+    """Submit valid solution to testnet chain for scoring."""
+    try:
+        # Submit to chain using submit_and_wait endpoint
+        r = requests.post(
+            f"{TESTNET_RPC}/api/tx/submit_and_wait",
+            data=solution,
+            verify=False,
+            timeout=60
+        )
+        return r.json()
+    except Exception as e:
+        print(f"Submission error: {e}")
+        return None
+
+def check_score():
+    """Check current epoch score."""
+    try:
+        r = requests.get(f"{TESTNET_RPC}/api/epoch/score", verify=False, timeout=10)
+        return r.json()
+    except:
+        return None
+
 def mine_with_local_derivation(seed_info, diff_bits, max_attempts=1000):
     """Mine by deriving matrices locally for each nonce."""
     epoch = seed_info['epoch']
@@ -230,6 +253,25 @@ def main():
                 print(f"    API Response: {result}")
                 if result.get('valid') and result.get('valid_math'):
                     print("    [OK] VALID SOLUTION!")
+                    
+                    # SUBMIT TO CHAIN FOR SCORING
+                    print("\n[5] Submitting to testnet chain...")
+                    submit_result = submit_solution(solution)
+                    if submit_result:
+                        print(f"    Submit Response: {submit_result}")
+                        if submit_result.get('error') == 'ok':
+                            print("    [SUCCESS] Solution submitted to chain!")
+                        else:
+                            print(f"    [INFO] Submit result: {submit_result}")
+                    else:
+                        print("    [WARN] Submission failed, continuing...")
+                    
+                    # Check current score
+                    print("\n[6] Checking epoch score...")
+                    score = check_score()
+                    if score:
+                        print(f"    Score: {score}")
+                        
                 elif result.get('valid_math'):
                     print("    [OK] Math valid, but difficulty check failed")
                     print("    (Solution may have become stale - new epoch)")
@@ -237,7 +279,7 @@ def main():
                     print("    [FAIL] Math check failed - investigating...")
             
             # Get fresh seed info for next round
-            print("\n[5] Getting fresh seed info for next round...")
+            print("\n[7] Getting fresh seed info for next round...")
             seed_info = get_seed_info()
             if seed_info is None:
                 print("    Failed to get seed info!")
