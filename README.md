@@ -88,7 +88,9 @@ python miner.py                          # Full PoW miner
 |----------|---------|
 | `/api/upow/seed_with_matrix_a_b` | Fetch workload (preamble + matrices) |
 | `/api/upow/validate` | Verify solutions |
+| `/api/tx/submit_and_wait` | Submit valid solutions to chain |
 | `/api/chain/stats` | Get current difficulty |
+| `/api/epoch/score` | Check submitted solutions score |
 
 ---
 
